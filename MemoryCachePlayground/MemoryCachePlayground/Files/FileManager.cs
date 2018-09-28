@@ -3,6 +3,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Caching;
 
 namespace MemoryCachePlayground.Files
@@ -23,8 +24,6 @@ namespace MemoryCachePlayground.Files
         public FileManager(string file, ILogger log, MemoryCache cache = null)
         {
             if (string.IsNullOrWhiteSpace(file)) { throw new ArgumentNullException(nameof(file)); }
-
-            if (!File.Exists(file)) { throw new FileNotFoundException("Check that file exists.", file); }
 
             this.file = file;
             this.cache = cache ?? MemoryCache.Default;
@@ -47,11 +46,37 @@ namespace MemoryCachePlayground.Files
 
             log.Information("File: [{Name}] was not found in cache. Reading file content.", fileName);
 
+            if (!File.Exists(file)) { throw new FileNotFoundException("Check that file exists.", file); }
+
             var content = File.ReadAllLines(file);
 
             cache.Add(CacheKeys.Story, content, new CacheItemPolicy());
 
             return (fileName, content);
+        }
+
+        public void CreateFile(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) { throw new ArgumentException("Cannot be empty.", nameof(content)); }
+
+            log.Information("Creating file: [{File}]...", file);
+            log.Information("Saving content: [{Content}]...", content);
+
+            File.WriteAllText(file, content);
+
+            log.Information("File created with content!");
+        }
+
+        public void CreateFile(IEnumerable<string> content)
+        {
+            if (content == null || !content.Any()) { throw new ArgumentException("Cannot be empty.", nameof(content)); }
+
+            log.Information("Creating file: [{File}]...", file);
+            log.Information("Saving content: [{Content}]...", content);
+
+            File.WriteAllLines(file, content);
+
+            log.Information("File created with content!");
         }
     }
 }
