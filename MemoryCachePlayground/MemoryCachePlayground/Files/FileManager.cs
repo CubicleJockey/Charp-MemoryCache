@@ -27,7 +27,7 @@ namespace MemoryCachePlayground.Files
         /// 
         /// </summary>
         /// <returns></returns>
-        public (string file, string content) RetrieveFile()
+        public (string File, string Content) RetrieveFile()
         {
             if (cache.Contains(CacheKeys.Story))
             {
