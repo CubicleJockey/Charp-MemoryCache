@@ -1,5 +1,7 @@
 ﻿using MemoryCachePlayground.Constants;
+using Serilog;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Caching;
 
@@ -7,39 +9,49 @@ namespace MemoryCachePlayground.Files
 {
     public class FileManager
     {
-        private readonly FileInfo File;
+        private readonly string file;
         private readonly MemoryCache cache;
+        private readonly ILogger log;
 
 
-        public FileManager(string file)
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="file">File name or Full filename to be read from.</param>
+        /// <param name="log">Logger</param>
+        /// <param name="cache">Cache, IF null will default to Memory.Default, Optional</param>
+        public FileManager(string file, ILogger log, MemoryCache cache = null)
         {
             if (string.IsNullOrWhiteSpace(file)) { throw new ArgumentNullException(nameof(file)); }
 
-            File = new FileInfo(file);
-            File.Refresh();
+            if (!File.Exists(file)) { throw new FileNotFoundException("Check that file exists.", file); }
 
-            if (!File.Exists) { throw new FileNotFoundException("Check that file exists.", file); }
-
-            cache = MemoryCache.Default;
+            this.file = file;
+            this.cache = cache ?? MemoryCache.Default;
+            this.log = log;
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
-        public (string File, string Content) RetrieveFile()
+        public (string FileName, IEnumerable<string> Content) RetrieveFile()
         {
+            var fileName = Path.GetFileName(file);
+            log.Information("Checking if file: [{Name}] is cached.", fileName);
             if (cache.Contains(CacheKeys.Story))
             {
-                return (File.Name, (string)cache.GetCacheItem(CacheKeys.Story)?.Value);
+                log.Information("File: [{Name}] was found in the cache. Returning from cache.", fileName);
+                return (fileName, cache.GetCacheItem(CacheKeys.Story)?.Value as IEnumerable<string>);
             }
 
-            string content;
-            using (var streamReader = File.OpenText())
-            {
-                content = streamReader.ReadToEnd();
-            }
-            return (File.Name, content);
+            log.Information("File: [{Name}] was not found in cache. Reading file content.", fileName);
+
+            var content = File.ReadAllLines(file);
+
+            cache.Add(CacheKeys.Story, content, new CacheItemPolicy());
+
+            return (fileName, content);
         }
     }
 }

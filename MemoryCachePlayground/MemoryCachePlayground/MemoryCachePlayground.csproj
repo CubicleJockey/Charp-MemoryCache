@@ -43,7 +43,7 @@
     <Reference Include="System.Runtime.Caching" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Files\CacheFiles.cs" />
+    <Compile Include="Files\CacheFilesPlayground.cs" />
     <Compile Include="Constants\CacheKeys.cs" />
     <Compile Include="Files\FileManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
